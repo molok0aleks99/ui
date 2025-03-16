@@ -1,0 +1,65 @@
+name: Publish lido-ui-v4
+
+on:
+  push:
+    branches:
+      - lido-ui-v4
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      NODE_OPTIONS: --max_old_space_size=4096
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'yarn'
+
+      - name: Install Dependencies
+        run: yarn install --immutable
+
+      - name: Build Components
+        run: yarn build
+
+      - name: Build Storybook
+        run: yarn build-storybook
+
+      - name: Merge Storybook builds
+        run: |
+          # Получаем опубликованные файлы из ветки gh-pages (если есть)
+          git fetch origin gh-pages:gh-pages-temp || echo "gh-pages branch not found"
+          git worktree add gh-pages-temp origin/gh-pages
+          # Сохраняем текущую сборку (v4) во временной папке
+          mv storybook-static storybook-static-temp
+          # Создаем чистую директорию storybook-static
+          mkdir -p storybook-static
+          # Копируем v4 сборку во вложенную папку storybook-static/v4
+          mkdir -p storybook-static/v4
+          cp -r storybook-static-temp/* storybook-static/v4/
+          # Если в опубликованных файлах имеется сборка основной версии (v3),
+          # копируем её в корень storybook-static, исключая папку v4 чтобы не перезаписать v4 сборку.
+          if [ -d gh-pages-temp ]; then
+            rsync -av --exclude 'v4' gh-pages-temp/ storybook-static/
+          else
+            echo "No main version found in gh-pages"
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: lidofinance/github-pages-action@v1
+        with:
+          branch: gh-pages
+          folder: storybook-static

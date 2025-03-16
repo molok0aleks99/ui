@@ -1,0 +1,30 @@
+.icon {
+  --local-icon-size: 24px;
+
+  grid-area: a;
+  place-self: center center;
+}
+
+.light {
+  composes: icon;
+  visibility: var(--lido-dark-mode-visibility);
+}
+
+.dark {
+  composes: icon;
+  visibility: var(--lido-light-mode-visibility);
+}
+
+.themeToggler {
+  display: inline-grid;
+  grid-template-areas: 'a';
+
+  /* 
+      button element contains span as children container, we want to bypass it.
+      by aiming explicit "span:first-child" we're verifying that this is what we are aiming for
+      witout breaking our SVGs 
+    */
+  & > span:first-child {
+    display: contents;
+  }
+}

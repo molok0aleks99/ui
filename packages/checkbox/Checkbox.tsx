@@ -1,47 +1,58 @@
-import { ForwardedRef, forwardRef } from 'react'
-import { CheckboxProps } from './types.js'
-import {
-  CheckboxWrapperStyle,
-  CheckboxInputStyle,
-  CheckboxIconStyle,
-} from './CheckboxStyles.js'
-import { Text } from '../text/index.js'
-import { Box } from '../box/index.js'
+import { ComponentProps, forwardRef, ForwardedRef } from 'react'
+import styles from './Checkbox.module.css'
+import cn from 'classnames'
+
+export type CheckboxProps = Omit<ComponentProps<'input'>, 'type' | 'size'> & {
+  variant?: CheckboxVariant
+  size?: CheckboxSize
+}
+
+export type CheckboxVariant = 'accent' | 'primary'
+export type CheckboxSize = 'xs' | 's' | 'm' | 'l'
 
 export const Checkbox = forwardRef(
   (
     {
+      variant = 'accent',
+      size = 's',
+      disabled = false,
       className,
       style,
-      wrapperRef,
-      disabled,
       children,
-      label,
       ...rest
     }: CheckboxProps,
-    inputRef?: ForwardedRef<HTMLInputElement>,
+    ref: ForwardedRef<HTMLInputElement>,
   ) => {
     return (
-      <CheckboxWrapperStyle
-        className={className}
+      <label
+        className={cn(className, styles.container, {
+          [styles.containerDisabled]: disabled,
+        })}
         style={style}
-        ref={wrapperRef}
       >
-        <CheckboxInputStyle
+        <input
+          ref={ref}
+          className={cn(
+            styles.input,
+            styles[variant],
+            styles[`inputSize--${size.toUpperCase()}`],
+          )}
           type='checkbox'
           disabled={disabled}
-          ref={inputRef}
           {...rest}
         />
-        <CheckboxIconStyle />
-        {label && (
-          <Box ml={8}>
-            <Text size='xxs' color={disabled ? 'secondary' : 'default'}>
-              {label}
-            </Text>
-          </Box>
-        )}
-      </CheckboxWrapperStyle>
+        <span
+          className={cn(
+            styles.text,
+            styles[`textSize--${size.toUpperCase()}`],
+            {
+              [styles.textDisabled]: disabled,
+            },
+          )}
+        >
+          {children}
+        </span>
+      </label>
     )
   },
 )

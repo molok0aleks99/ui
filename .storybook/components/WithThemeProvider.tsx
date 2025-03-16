@@ -1,17 +1,7 @@
 import { Decorator } from '@storybook/react'
-import { createGlobalStyle } from 'styled-components'
-import { CookieThemeProvider, ThemeName } from '../../packages/theme/index.js'
-
-const GlobalStyle = createGlobalStyle`
-  body {
-    padding: 0 !important;
-    display: flex;
-  }
-
-  html, body, #root {
-    min-height: 100vh;
-  }
-`
+import { ThemeName } from '../../packages/theme-css/constants'
+import { CookieThemeProvider } from '../../packages/theme-css/cookie-theme-provider'
+import { ThemeToggler } from '../../packages'
 
 export const WithThemeProvider: Decorator<{
   themeOverride?: ThemeName | 'follow cookie and system'
@@ -24,7 +14,16 @@ export const WithThemeProvider: Decorator<{
           : args.themeOverride
       }
     >
-      <GlobalStyle />
+      <div
+        style={{
+          minWidth: '100%',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
+      >
+        <ThemeToggler />
+      </div>
+
       <div
         style={{
           minHeight: '100vh',
