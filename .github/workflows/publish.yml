@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - lido-ui-v4
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -34,17 +35,28 @@ jobs:
       - name: Build Components
         run: yarn build
 
-      - name: Publish to NPM
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          yarn release
-
       - name: Build Storybook
         run: yarn build-storybook
+
+      - name: Merge Storybook builds
+        run: |
+          # Получаем опубликованные файлы из ветки gh-pages (если есть)
+          git fetch origin gh-pages:gh-pages-temp || echo "gh-pages branch not found"
+          git worktree add gh-pages-temp origin/gh-pages
+          # Сохраняем текущую сборку (v4) во временной папке
+          mv storybook-static storybook-static-temp
+          # Создаем чистую директорию storybook-static
+          mkdir -p storybook-static
+          # Копируем v4 сборку во вложенную папку storybook-static/v4
+          mkdir -p storybook-static/v4
+          cp -r storybook-static-temp/* storybook-static/v4/
+          # Если в опубликованных файлах имеется сборка основной версии (v3),
+          # копируем её в корень storybook-static, исключая папку v4 чтобы не перезаписать v4 сборку.
+          if [ -d gh-pages-temp ]; then
+            rsync -av --exclude 'v4' gh-pages-temp/ storybook-static/
+          else
+            echo "No main version found in gh-pages"
+          fi
 
       - name: Deploy to GitHub Pages
         uses: lidofinance/github-pages-action@v1
